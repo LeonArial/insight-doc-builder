@@ -13,8 +13,12 @@ app = Flask(__name__)
 CORS(app)  # 允许跨域请求，以便前端可以调用
 
 # --- 应用配置 ---
+# 获取当前脚本所在的目录的绝对路径
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+TEMPLATE_PATH = os.path.join(BASE_DIR, '渗透报告模板.docx')
+
 CONFIG = {
-    'TEMPLATE_PATH': '渗透报告模板.docx'
+    'TEMPLATE_PATH': TEMPLATE_PATH
 }
 
 # --- 从 doc_generator.py 迁移过来的核心函数 ---
@@ -190,4 +194,4 @@ def generate_report_endpoint():
 
 if __name__ == '__main__':
     # 端口5001以避免与Vite的默认端口冲突
-    app.run(debug=True, port=5001)
+    app.run(host='0.0.0.0', debug=True, port=5001)

@@ -29,7 +29,7 @@ const ContactInfoForm: React.FC<ContactInfoFormProps> = ({ reportData, setReport
           <h3 className="text-white font-medium mb-4">对接人员信息</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="contactName" className="text-white">对接人员姓名 (#DJNAME#)</Label>
+              <Label htmlFor="contactName" className="text-white">对接人员姓名</Label>
               <Input
                 id="contactName"
                 value={reportData.contactName}
@@ -39,7 +39,7 @@ const ContactInfoForm: React.FC<ContactInfoFormProps> = ({ reportData, setReport
               />
             </div>
             <div>
-              <Label htmlFor="contactPhone" className="text-white">对接人员联系电话 (#DJPHONE#)</Label>
+              <Label htmlFor="contactPhone" className="text-white">对接人员联系电话</Label>
               <Input
                 id="contactPhone"
                 value={reportData.contactPhone}
@@ -55,7 +55,7 @@ const ContactInfoForm: React.FC<ContactInfoFormProps> = ({ reportData, setReport
           <h3 className="text-white font-medium mb-4">测试人员信息</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="testerName" className="text-white">测试人员姓名 (#CSNAME#)</Label>
+              <Label htmlFor="testerName" className="text-white">测试人员姓名</Label>  
               <Input
                 id="testerName"
                 value={reportData.testerName}
@@ -65,7 +65,7 @@ const ContactInfoForm: React.FC<ContactInfoFormProps> = ({ reportData, setReport
               />
             </div>
             <div>
-              <Label htmlFor="testerPhone" className="text-white">测试人员联系电话 (#CSPHONE#)</Label>
+              <Label htmlFor="testerPhone" className="text-white">测试人员联系电话</Label>
               <Input
                 id="testerPhone"
                 value={reportData.testerPhone}

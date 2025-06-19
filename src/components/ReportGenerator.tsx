@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { ReportData } from './report/types';
+import { ReportData, VulnerabilityData } from './report/types';
 import ReportHeader from './report/ReportHeader';
 import BasicInfoForm from './report/BasicInfoForm';
 import ContactInfoForm from './report/ContactInfoForm';
@@ -12,6 +12,14 @@ import API_CONFIG from '@/config';
 const ReportGenerator = () => {
   const { toast } = useToast();
   const [isGenerating, setIsGenerating] = useState(false);
+  const [currentVulnerability, setCurrentVulnerability] = useState<Omit<VulnerabilityData, 'id'>>({
+    riskLevel: '中危',
+    name: '',
+    description: '',
+    process: '',
+    advice: '',
+    images: []
+  });
   const [reportData, setReportData] = useState<ReportData>({
     systemName: '',
     reportDate: new Date().toISOString().split('T')[0],
@@ -100,7 +108,12 @@ const ReportGenerator = () => {
           </TabsContent>
 
           <TabsContent value="vulnerabilities">
-            <VulnerabilityManager reportData={reportData} setReportData={setReportData} />
+            <VulnerabilityManager 
+              reportData={reportData} 
+              setReportData={setReportData} 
+              currentVulnerability={currentVulnerability}
+              setCurrentVulnerability={setCurrentVulnerability}
+            />
           </TabsContent>
 
           <TabsContent value="preview">
