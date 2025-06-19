@@ -5,7 +5,6 @@ export interface VulnerabilityData {
   description: string;
   process: string;
   advice: string;
-  images?: File[];
 }
 
 export interface ReportData {

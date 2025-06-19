@@ -3,6 +3,11 @@ from flask_cors import CORS
 import os
 import re
 import copy
+import base64
+import tempfile
+from bs4 import BeautifulSoup
+from docx.shared import Inches, Pt, RGBColor
+from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
 import datetime
 from docx import Document
 from docx.shared import Inches
@@ -124,15 +129,59 @@ def populate_vulnerabilities(doc, vulnerabilities, system_name):
         p = all_title_paragraphs[i]
         table = all_detail_tables[i]
 
-        p.text = f"5.1.{i+1} 【{vuln.get('risk', '')}】{vuln.get('name', '')}"
-
-        table.cell(0, 1).text = vuln.get('description', '')
-        table.cell(2, 1).text = vuln.get('advice', '')
+        # 设置漏洞标题（风险等级和名称）
+        risk = vuln.get('risk', '')
+        name = vuln.get('name', '')
         
+        # 清空段落内容
+        clear_paragraph(p)
+        
+        # 添加格式化后的标题
+        run = p.add_run()
+        run.text = f"5.1.{i+1} 【"
+        
+        # 添加风险等级（加粗）
+        risk_run = p.add_run(str(risk))
+        risk_run.bold = True
+        
+        # 添加剩余文本
+        run = p.add_run(f'】{name}')
+
+        # 处理描述
+        description_cell = table.cell(0, 1)
+        description = vuln.get('description', '')
+        if description and '<' in description and '>' in description:
+            # 如果包含HTML标签，使用html_to_docx处理
+            html_to_docx(description, description_cell)
+        else:
+            # 否则直接设置文本
+            clear_cell_content(description_cell)
+            if description:
+                description_cell.text = str(description)
+        
+        # 处理修复建议
+        advice_cell = table.cell(2, 1)
+        advice = vuln.get('advice', '')
+        if advice and '<' in advice and '>' in advice:
+            # 如果包含HTML标签，使用html_to_docx处理
+            html_to_docx(advice, advice_cell)
+        else:
+            # 否则直接设置文本
+            clear_cell_content(advice_cell)
+            if advice:
+                advice_cell.text = str(advice)
+        
+        # 处理过程（支持富文本）
         cell = table.cell(1, 1)
-        clear_cell_content(cell)
-        p_text = cell.paragraphs[0]
-        p_text.add_run(vuln.get('process', {}).get('text', ''))
+        process_html = vuln.get('process', {}).get('html', '') or vuln.get('process', {}).get('text', '')
+        if process_html and '<' in process_html and '>' in process_html:
+            # 如果包含HTML标签，使用html_to_docx处理
+            html_to_docx(process_html, cell)
+        else:
+            # 否则直接设置文本
+            clear_cell_content(cell)
+            if process_html:
+                cell.text = str(process_html)
 
         image_path = vuln.get('process', {}).get('image_path', '')
         if image_path and os.path.exists(image_path):
@@ -143,6 +192,169 @@ def populate_vulnerabilities(doc, vulnerabilities, system_name):
                 p_image.alignment = WD_ALIGN_PARAGRAPH.CENTER
             except Exception as e:
                 cell.add_paragraph(f'\n[图片添加失败: {e}]')
+
+def html_to_docx(html_content, cell):
+    """
+    将HTML内容转换为docx格式并添加到指定的单元格中。
+    支持以下HTML标签：
+    - 段落: <p>
+    - 换行: <br>
+    - 文本样式: <strong>, <b>, <em>, <i>, <u>
+    - 列表: <ul>, <ol>, <li>
+    - 图片: <img> (支持base64编码的图片)
+    
+    Args:
+        html_content (str): 要转换的HTML内容
+        cell: docx表格单元格对象
+    """
+    # 清空单元格内容
+    for paragraph in cell.paragraphs:
+        for run in paragraph.runs:
+            run.text = ""
+    if cell.paragraphs:
+        cell.paragraphs[0].text = ""
+    
+    # 如果没有内容或内容为空，添加一个空段落并返回
+    if not html_content or not html_content.strip():
+        if not cell.paragraphs:
+            cell.add_paragraph()
+        return
+        
+    # 清空单元格内容
+    for paragraph in cell.paragraphs:
+        for run in paragraph.runs:
+            run.text = ""
+    if len(cell.paragraphs) > 0:
+        cell.paragraphs[0].text = ""
+    
+    # 如果没有内容，添加一个空段落
+    if not cell.paragraphs:
+        cell.add_paragraph()
+    
+    # 使用BeautifulSoup解析HTML
+    soup = BeautifulSoup(html_content, 'html.parser')
+    
+    # 处理每个顶级元素
+    current_paragraph = cell.paragraphs[0]
+    
+    def process_element(element, paragraph, list_level=0, list_type=None):
+        nonlocal current_paragraph
+        
+        if element.name == 'p':
+            if paragraph.text.strip() != '':  # 如果当前段落不为空，创建新段落
+                current_paragraph = cell.add_paragraph()
+            for child in element.children:
+                if child.name:
+                    process_element(child, current_paragraph, list_level, list_type)
+                else:
+                    if str(child).strip():
+                        run = current_paragraph.add_run(str(child))
+        
+        elif element.name in ['strong', 'b']:
+            run = paragraph.add_run()
+            run.bold = True
+            for child in element.children:
+                if child.name:
+                    process_element(child, paragraph, list_level, list_type)
+                else:
+                    run.add_text(str(child))
+        
+        elif element.name in ['em', 'i']:
+            run = paragraph.add_run()
+            run.italic = True
+            for child in element.children:
+                if child.name:
+                    process_element(child, paragraph, list_level, list_type)
+                else:
+                    run.add_text(str(child))
+        
+        elif element.name == 'u':
+            run = paragraph.add_run()
+            run.underline = True
+            for child in element.children:
+                if child.name:
+                    process_element(child, paragraph, list_level, list_type)
+                else:
+                    run.add_text(str(child))
+        
+        elif element.name in ['ul', 'ol']:
+            list_type = 'bullet' if element.name == 'ul' else 'decimal'
+            for li in element.find_all('li', recursive=False):
+                process_element(li, paragraph, list_level + 1, list_type)
+        
+        elif element.name == 'li':
+            # 添加列表项标记
+            if list_type == 'bullet':
+                prefix = '•\t'
+            else:
+                prefix = f'{list_level}.\t'
+            
+            run = paragraph.add_run(prefix)
+            
+            # 处理列表项内容
+            for child in element.children:
+                if child.name and child.name != 'ul' and child.name != 'ol':
+                    process_element(child, paragraph, list_level, list_type)
+                elif child.name in ['ul', 'ol']:
+                    # 处理嵌套列表
+                    process_element(child, paragraph, list_level, list_type)
+                else:
+                    if str(child).strip():
+                        run = paragraph.add_run(str(child).strip() + ' ')
+            
+            # 添加新段落用于下一个列表项或内容
+            current_paragraph = cell.add_paragraph()
+        
+        elif element.name == 'img':
+            # 处理base64编码的图片
+            src = element.get('src', '')
+            if src.startswith('data:image'):
+                try:
+                    # 提取base64数据
+                    img_data = src.split('base64,')[1]
+                    img_binary = base64.b64decode(img_data)
+                    
+                    # 创建临时文件
+                    with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as temp_file:
+                        temp_file.write(img_binary)
+                        temp_path = temp_file.name
+                    
+                    # 添加图片到文档
+                    run = paragraph.add_run()
+                    run.add_picture(temp_path, width=Inches(4))  # 设置图片宽度为4英寸
+                    
+                    # 删除临时文件
+                    os.unlink(temp_path)
+                    
+                    # 添加新段落用于后续内容
+                    current_paragraph = cell.add_paragraph()
+                    
+                except Exception as e:
+                    print(f"Error processing image: {e}")
+                    paragraph.add_run("[图片加载失败]")
+        
+        elif element.name == 'br':
+            # 添加换行
+            paragraph.add_run().add_break()
+        
+        else:
+            # 递归处理子元素
+            for child in element.children:
+                if child.name:
+                    process_element(child, paragraph, list_level, list_type)
+                else:
+                    if str(child).strip():
+                        paragraph.add_run(str(child))
+    
+    # 处理顶级元素
+    for element in soup.children:
+        if element.name:
+            process_element(element, current_paragraph)
+    
+    # 移除最后一个空段落（如果有）
+    if len(cell.paragraphs) > 1 and not cell.paragraphs[-1].text.strip():
+        p = cell.paragraphs[-1]
+        p._element.getparent().remove(p._element)
 
 # --- API Endpoint ---
 

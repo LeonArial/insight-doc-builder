@@ -17,8 +17,7 @@ const ReportGenerator = () => {
     name: '',
     description: '',
     process: '',
-    advice: '',
-    images: []
+    advice: ''
   });
   const [reportData, setReportData] = useState<ReportData>({
     systemName: '',
