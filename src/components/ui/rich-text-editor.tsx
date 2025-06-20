@@ -55,22 +55,23 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange, classN
   }
 
 return (
-    <div className={`border-2 border-primary-500 shadow-lg rounded-xl overflow-hidden bg-slate-800 ${className}`}>
-        <div className="bg-slate-700 p-2 border-b border-slate-600 flex items-center">
+    <div className={`border-2 border-slate-600 hover:border-primary-500 rounded-lg overflow-hidden bg-slate-800 transition-all duration-200 ${className || ''}`}>
+        <div className="bg-slate-700/50 border-b border-slate-600 flex items-center p-1">
             <Button 
                 type="button" 
                 variant="ghost" 
                 size="sm"
                 onClick={addImage}
-                className="text-white bg-transparent hover:bg-slate-600"
+                className="text-slate-300 hover:bg-slate-600 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
             >
-                <ImageIcon className="w-4 h-4" />
+                <ImageIcon className="w-4 h-4 mr-1" />
             </Button>
         </div>
-        <EditorContent 
-            editor={editor} 
-            className="prose prose-invert max-w-none p-6 min-h-[50px] text-base bg-slate-800 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all duration-200"
-        />
+        <div className="p-1 bg-slate-700">
+            <EditorContent 
+                editor={editor} 
+            />
+        </div>
     </div>
 )
 }

@@ -57,16 +57,7 @@ const BasicInfoForm: React.FC<BasicInfoFormProps> = ({ reportData, setReportData
 
   return (
     <Card className="bg-slate-800/50 backdrop-blur border-slate-700">
-      <CardHeader>
-        <CardTitle className="text-white flex items-center">
-          <FileText className="w-5 h-5 mr-2 text-blue-400" />
-          系统基本信息
-        </CardTitle>
-        <CardDescription className="text-slate-300">
-          填写被测试系统的基本信息
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4 mt-5">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <Label htmlFor="systemName" className="text-white">系统名称</Label>
@@ -78,14 +69,14 @@ const BasicInfoForm: React.FC<BasicInfoFormProps> = ({ reportData, setReportData
               className="bg-slate-700 border-slate-600 text-white"
             />
           </div>
-                    <div>
+          <div>
             <Label htmlFor="reportDate" className="text-white">报告编写日期</Label>
             <Popover>
               <PopoverTrigger asChild>
                 <Button
                   variant={"outline"}
                   className={cn(
-                    "w-full justify-start text-left font-normal bg-slate-700 border-slate-600 text-white hover:bg-slate-600"
+                    "w-full justify-start text-left font-normal bg-slate-700 border-slate-600 text-white hover:bg-slate-600 hover:text-white",
                   )}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />

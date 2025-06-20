@@ -20,14 +20,8 @@ const getRiskColor = (risk: string) => {
 
 const PreviewAndGenerate: React.FC<PreviewAndGenerateProps> = ({ reportData, isGenerating, generateReport }) => (
   <Card className="bg-slate-800/50 backdrop-blur border-slate-700 text-white">
-    <CardHeader>
-      <CardTitle>预览与生成</CardTitle>
-      <CardDescription className="text-slate-300">
-        请在下方预览报告的关键信息，确认无误后点击生成按钮。
-      </CardDescription>
-    </CardHeader>
     <CardContent>
-      <div className="space-y-6">
+      <div className="space-y-6 mt-5">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
           <div className="space-y-2">
             <div className="text-slate-300"><strong className="text-white">系统名称:</strong> {reportData.systemName}</div>
