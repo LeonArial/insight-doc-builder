@@ -9,11 +9,11 @@ npm i
 # 第 3 步: 安装 Python 依赖项。
 pip install -r requirements.txt
 
-# 第 4 步：运行后端服务。
-python python app.py
-
-# 第 4 步：启动开发服务器。
+# 第 4 步：运行服务器启动脚本。
+node run.js
+# 或者
 npm run dev
+python run.py
 ```
 
 该项目使用以下技术构建：
