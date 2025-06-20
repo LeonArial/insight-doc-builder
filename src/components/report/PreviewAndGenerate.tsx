@@ -30,18 +30,18 @@ const PreviewAndGenerate: React.FC<PreviewAndGenerateProps> = ({ reportData, isG
       <div className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
           <div className="space-y-2">
-            <div className="text-slate-300"><strong className="text-white">系统名称:</strong> {reportData.systemName || '#SYSTEM#'}</div>
-            <div className="text-slate-300"><strong className="text-white">报告日期:</strong> {reportData.reportDate || '#DATE#'}</div>
-            <div className="text-slate-300"><strong className="text-white">IP/域名:</strong> {reportData.ipOrDomain || '#IP#'}</div>
-            <div className="text-slate-300"><strong className="text-white">测试范围:</strong> {reportData.testDateRange || '#DATARANGE#'}</div>
+            <div className="text-slate-300"><strong className="text-white">系统名称:</strong> {reportData.systemName}</div>
+            <div className="text-slate-300"><strong className="text-white">报告日期:</strong> {reportData.reportDate}</div>
+            <div className="text-slate-300"><strong className="text-white">IP/域名:</strong> {reportData.ipOrDomain}</div>
+            <div className="text-slate-300"><strong className="text-white">测试范围:</strong> {reportData.testDateRange}</div>
           </div>
           <div className="space-y-2">
-            <div className="text-slate-300"><strong className="text-white">对接人员:</strong> {reportData.contactName || '#DJNAME#'}</div>
-            <div className="text-slate-300"><strong className="text-white">对接电话:</strong> {reportData.contactPhone || '#DJPHONE#'}</div>
-            <div className="text-slate-300"><strong className="text-white">测试人员:</strong> {reportData.testerName || '#CSNAME#'}</div>
-            <div className="text-slate-300"><strong className="text-white">测试电话:</strong> {reportData.testerPhone || '#CSPHONE#'}</div>
+            <div className="text-slate-300"><strong className="text-white">对接人员:</strong> {reportData.contactName}</div>
+            <div className="text-slate-300"><strong className="text-white">对接电话:</strong> {reportData.contactPhone}</div>
+            <div className="text-slate-300"><strong className="text-white">测试人员:</strong> {reportData.testerName}</div>
+            <div className="text-slate-300"><strong className="text-white">测试电话:</strong> {reportData.testerPhone}</div>
           </div>
-          <div className="md:col-span-2 text-slate-300"><strong className="text-white">测试账号:</strong> {reportData.testAccount || '#CSACCOUNT#'}</div>
+          <div className="md:col-span-2 text-slate-300"><strong className="text-white">测试账号:</strong> {reportData.testAccount}</div>
         </div>
 
         <Separator className="bg-slate-600" />

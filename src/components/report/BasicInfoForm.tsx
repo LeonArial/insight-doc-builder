@@ -40,7 +40,13 @@ const BasicInfoForm: React.FC<BasicInfoFormProps> = ({ reportData, setReportData
   const handleDateSelect = (selectedDate: Date | undefined) => {
     setDate(selectedDate);
     if (selectedDate) {
-        setReportData(prev => ({ ...prev, reportDate: format(selectedDate, 'yyyy-MM-dd') }));
+      const formatted = format(selectedDate, 'yyyy-MM-dd');
+      const sDate = format(selectedDate, 'yyyy-MMdd');
+      setReportData(prev => ({
+        ...prev,
+        reportDate: formatted,
+        sDate: sDate
+      }));
     }
   };
 
@@ -79,12 +85,11 @@ const BasicInfoForm: React.FC<BasicInfoFormProps> = ({ reportData, setReportData
                 <Button
                   variant={"outline"}
                   className={cn(
-                    "w-full justify-start text-left font-normal bg-slate-700 border-slate-600 text-white hover:bg-slate-600 hover:text-white",
-                    !reportData.reportDate && "text-muted-foreground"
+                    "w-full justify-start text-left font-normal bg-slate-700 border-slate-600 text-white hover:bg-slate-600"
                   )}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {reportData.reportDate ? format(reportData.reportDate, "PPP") : <span>选择一个日期</span>}
+                  {reportData.reportDate}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0 bg-slate-800 border-slate-700">

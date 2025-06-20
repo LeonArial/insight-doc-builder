@@ -50,6 +50,6 @@ def analyze_document_to_md(doc_path, output_path):
         print(f"打开或分析文档时出错: {e}")
 
 if __name__ == '__main__':
-    template_path = '渗透测试报告_20250619131023.docx'
+    template_path = '渗透报告模板.docx'
     output_md_path = 'template_analysis.md'
     analyze_document_to_md(template_path, output_md_path)

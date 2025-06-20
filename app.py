@@ -15,7 +15,7 @@ from docx.enum.text import WD_ALIGN_PARAGRAPH
 import io
 
 app = Flask(__name__)
-CORS(app)  # 允许跨域请求，以便前端可以调用
+CORS(app, expose_headers=['Content-Disposition'])  # 允许跨域请求，并暴露Content-Disposition头
 
 # --- 应用配置 ---
 # 获取当前脚本所在的目录的绝对路径
@@ -29,13 +29,20 @@ CONFIG = {
 # --- 从 doc_generator.py 迁移过来的核心函数 ---
 
 def replace_text_in_element(element, replacements):
-    """在一个元素（如文档、页眉、单元格）内递归替换文本。"""
+    """在一个元素（如文档、页眉、单元格）内递归替换文本，支持跨run占位符。"""
     for para in element.paragraphs:
+        full_text = ''.join(run.text for run in para.runs)
+        replaced = False
         for key, value in replacements.items():
-            if key in para.text:
-                for run in para.runs:
-                    if key in run.text:
-                        run.text = run.text.replace(key, str(value))
+            if key in full_text:
+                full_text = full_text.replace(key, str(value))
+                replaced = True
+        if replaced and para.runs:
+            # 清空所有 run
+            for run in para.runs:
+                run.text = ''
+            # 只在第一个 run 填充新内容
+            para.runs[0].text = full_text
 
     for table in element.tables:
         for row in table.rows:
@@ -366,7 +373,8 @@ def generate_report_endpoint():
         
         replacements = {
             '#SYSTEM#': data.get('systemName', ''),
-            '#DATA#': data.get('reportDate', ''),
+            '#DATE#': data.get('reportDate', ''),
+            '#SDATE#': data.get('sDate', ''),
             '#IP#': data.get('ipOrDomain', ''),
             '#DATARANGE#': data.get('testDateRange', ''),
             '#DJNAME#': data.get('contactName', ''),
@@ -390,8 +398,9 @@ def generate_report_endpoint():
         doc.save(file_stream)
         file_stream.seek(0)
 
-        timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
-        filename = f"渗透测试报告_{timestamp}.docx"
+        systemName = data.get('systemName', '')
+        reportDate = data.get('sDate', '')
+        filename = f"CSCEC8B-PT-{reportDate}-01{systemName}.docx"
 
         return send_file(
             file_stream,

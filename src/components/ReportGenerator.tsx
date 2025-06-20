@@ -22,6 +22,7 @@ const ReportGenerator = () => {
   const [reportData, setReportData] = useState<ReportData>({
     systemName: '',
     reportDate: new Date().toISOString().split('T')[0],
+    sDate: new Date().toISOString().split('T')[0].replace(/-/g, ''),
     ipOrDomain: '',
     testDateRange: '',
     contactName: '',
@@ -63,12 +64,29 @@ const ReportGenerator = () => {
       a.href = url;
       
       const contentDisposition = response.headers.get('Content-Disposition');
+      // console.log(contentDisposition);
       let filename = `${reportData.systemName || '渗透测试报告'}.docx`;
       if (contentDisposition) {
-          const filenameMatch = contentDisposition.match(/filename="(.+)"/);
-          if (filenameMatch && filenameMatch.length === 2) {
-              filename = decodeURIComponent(escape(filenameMatch[1]));
+        // 优先尝试解析 filename* (RFC 5987 编码, 支持Unicode)
+        const filenameStarMatch = contentDisposition.match(/filename\*=(?:UTF-8'')?([^;]+)/i);
+        if (filenameStarMatch && filenameStarMatch[1]) {
+          try {
+            filename = decodeURIComponent(filenameStarMatch[1]);
+          } catch (e) {
+            console.error('Error decoding filename*:', e);
+            // 解码失败时回退，处理带引号和不带引号的情况
+            const filenameMatch = contentDisposition.match(/filename=([^;]+)/i);
+            if (filenameMatch && filenameMatch[1]) {
+              filename = filenameMatch[1].replace(/"/g, ''); // 移除可能的引号
+            }
           }
+        } else {
+          // 回退到解析简单的 filename，处理带引号和不带引号的情况
+          const filenameMatch = contentDisposition.match(/filename=([^;]+)/i);
+          if (filenameMatch && filenameMatch[1]) {
+            filename = filenameMatch[1].replace(/"/g, ''); // 移除可能的引号
+          }
+        }
       }
       a.download = filename;
       

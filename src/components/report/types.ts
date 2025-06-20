@@ -10,6 +10,7 @@ export interface VulnerabilityData {
 export interface ReportData {
   systemName: string;
   reportDate: string;
+  sDate: string; // YYYY-MMdd format
   ipOrDomain: string;
   testDateRange: string;
   contactName: string;

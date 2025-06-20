@@ -146,7 +146,7 @@ def main():
 
     replacements = {
         '#SYSTEM#': 'XX管理信息系统',
-        '#DATA#': datetime.datetime.now().strftime("%Y/%m/%d"),
+        '#DATE#': datetime.datetime.now().strftime("%Y/%m/%d"),
         '#IP#': '192.168.1.100',
         '#DATARANGE#': '2025/06/17-2025/06/19',
         '#DJNAME#': '张三',
