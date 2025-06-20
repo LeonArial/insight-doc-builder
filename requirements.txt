@@ -1,3 +1,5 @@
 python-docx
 Flask
 Flask-Cors
+BeautifulSoup
+docx
