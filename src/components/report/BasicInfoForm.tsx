@@ -25,7 +25,7 @@ const BasicInfoForm: React.FC<BasicInfoFormProps> = ({ reportData, setReportData
     let formattedRange = '';
     if (selectedRange?.from) {
       if (selectedRange.to) {
-        formattedRange = `${format(selectedRange.from, 'yyyy-MM-dd')} 至 ${format(selectedRange.to, 'yyyy-MM-dd')}`;
+        formattedRange = `${format(selectedRange.from, 'yyyy-MM-dd')}至${format(selectedRange.to, 'yyyy-MM-dd')}`;
       } else {
         formattedRange = format(selectedRange.from, 'yyyy-MM-dd');
       }

@@ -81,7 +81,7 @@ def populate_vulnerabilities(doc, vulnerabilities, system_name):
     它依赖于特定的文本（如 '【#VULNERABILITIES_SECTION#】'）来定位模板元素。
     如果模板被修改，此函数可能需要相应调整。
     """
-    # 1. 填充漏洞概要表
+    """ # 1. 填充漏洞概要表
     summary_table = next((tbl for tbl in doc.tables if len(tbl.rows) > 0 and len(tbl.columns) > 4 and '系统名称' in tbl.cell(0, 1).text and '漏洞名称' in tbl.cell(0, 2).text), None)
     if summary_table:
         for i in range(len(summary_table.rows) - 1, 0, -1):
@@ -93,7 +93,7 @@ def populate_vulnerabilities(doc, vulnerabilities, system_name):
             cells[1].text = system_name
             cells[2].text = vuln.get('name', '')
             cells[3].text = vuln.get('risk', '')
-            cells[4].text = vuln.get('description', '')
+            cells[4].text = vuln.get('description', '') """
 
     # 2. 查找漏洞模板
     p_template = next((p for p in doc.paragraphs if '【#VULNERABILITIES_SECTION#】' in p.text), None)
@@ -147,9 +147,8 @@ def populate_vulnerabilities(doc, vulnerabilities, system_name):
         run = p.add_run()
         run.text = f"5.1.{i+1} 【"
         
-        # 添加风险等级（加粗）
-        risk_run = p.add_run(str(risk))
-        risk_run.bold = True
+        # 添加风险等级
+        p.add_run(str(risk))
         
         # 添加剩余文本
         run = p.add_run(f'】{name}')
@@ -259,7 +258,6 @@ def html_to_docx(html_content, cell):
         
         elif element.name in ['strong', 'b']:
             run = paragraph.add_run()
-            run.bold = True
             for child in element.children:
                 if child.name:
                     process_element(child, paragraph, list_level, list_type)

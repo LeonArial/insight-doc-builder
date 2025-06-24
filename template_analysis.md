@@ -567,7 +567,7 @@ _1_: `低危` | _2_: `` | _3_: `/`
 **行 1:**
 _1_: `序号` | _2_: `系统名称` | _3_: `漏洞名称` | _4_: `风险级别` | _5_: `风险描述`
 **行 2:**
-_1_: `1` | _2_: `#SYSTEM#` | _3_: `#POCNAME#` | _4_: `#POCRISK#` | _5_: `#POCDISCRIBE#`
+_1_: `1` | _2_: `#VULNERABILITIES_SECTION#` | _3_: `#VULNERABILITIES_SECTION#` | _4_: `#VULNERABILITIES_SECTION#` | _5_: `#VULNERABILITIES_SECTION#`
 
 
 
