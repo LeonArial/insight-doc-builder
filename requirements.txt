@@ -2,6 +2,6 @@ python-docx
 Flask
 Flask-Cors
 beautifulsoup4
-pywin32; sys_platform == 'win32'
+pywin32
 matplotlib
 Pillow

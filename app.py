@@ -10,17 +10,8 @@ from docx import Document
 from docx.shared import Inches
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 import io
-import sys
-import subprocess
-
-# 为Windows平台条件性导入pywin32
-if sys.platform == "win32":
-    try:
-        import win32com.client
-        import pythoncom
-    except ImportError:
-        # 允许代码在未安装pywin32的系统上运行，尽管TOC更新功能会受影响
-        pass
+import win32com.client
+import pythoncom
 from PIL import Image
 import matplotlib
 matplotlib.use('Agg')
@@ -382,73 +373,34 @@ def html_to_docx(html_content, cell):
 
 # --- API Endpoint ---
 
-def update_toc_windows(doc_path):
+def update_toc(doc_path):
     """
-    使用 win32com 在 Windows 上更新 Word 文档的目录。
+    使用 win32com 更新 Word 文档的目录。
+    这需要 Windows 环境和安装了 PyWin32 库。
     """
-    if 'win32com' not in sys.modules:
-        print("警告: pywin32 模块不可用，将跳过在 Windows 上的目录更新。")
-        return
-
     pythoncom.CoInitializeEx(pythoncom.COINIT_APARTMENTTHREADED)
     word = None
     try:
         word = win32com.client.DispatchEx("Word.Application")
         word.Visible = False
         doc = word.Documents.Open(doc_path)
+        
+        # 更新文档中的所有字段，包括目录
         doc.Fields.Update()
+        
         doc.Close(SaveChanges=True)
     except Exception as e:
-        print(f"使用 Word 更新目录时出错: {e}")
-        raise
+        print(f"更新目录时出错: {e}")
+        raise  # 重新引发异常，以便端点可以捕获它
     finally:
         if word:
             try:
                 word.Quit(SaveChanges=False)
             except Exception:
+                # 关闭Word时出错是常见的，特别是如果进程已经自行终止。
+                # 由于文档已保存，此错误通常可以安全地忽略。
                 pass
         pythoncom.CoUninitialize()
-
-def update_toc_linux(doc_path):
-    """
-    在 Linux 上使用 LibreOffice 更新 Word 文档的目录。
-    需要安装 LibreOffice 并将其可执行文件（soffice或libreoffice）添加到系统的PATH中。
-    """
-    temp_dir = os.path.dirname(doc_path)
-    # LibreOffice在转换时会更新字段。我们通过“转换”到docx来触发更新。
-    command = ['soffice', '--headless', '--invisible', '--convert-to', 'docx', '--outdir', temp_dir, doc_path]
-    
-    try:
-        print("正在尝试使用 'soffice' 更新目录...")
-        # 兼容 Python 3.6，使用 stdout 和 stderr 代替 capture_output
-        subprocess.run(command, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=60)
-        print("使用 'soffice' 更新目录成功。")
-    except FileNotFoundError:
-        command[0] = 'libreoffice'
-        try:
-            print("'soffice' 未找到，正在尝试使用 'libreoffice' 更新目录...")
-            # 兼容 Python 3.6
-            subprocess.run(command, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=60)
-            print("使用 'libreoffice' 更新目录成功。")
-        except (FileNotFoundError, subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
-            error_msg = f"错误：无法使用 LibreOffice 更新目录。请确保在 Linux 系统上已安装 LibreOffice 并且 'soffice' 或 'libreoffice' 在系统路径中。错误详情: {e}"
-            print(error_msg)
-            # 不引发异常，仅打印警告，以确保报告生成流程能继续
-    except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
-        error_msg = f"使用 LibreOffice 更新目录时出错: {e.stderr if hasattr(e, 'stderr') else e}"
-        print(error_msg)
-
-def update_toc(doc_path):
-    """
-    根据当前操作系统，分派目录更新任务到合适的函数。
-    """
-    print(f"正在为平台 {sys.platform} 更新目录...")
-    if sys.platform == "win32":
-        update_toc_windows(doc_path)
-    elif sys.platform.startswith("linux"):
-        update_toc_linux(doc_path)
-    else:
-        print(f"警告：当前平台 ({sys.platform}) 不支持自动更新目录功能。将跳过此步骤。")
 
 def create_vulnerability_chart(gw, zw, dw):
     """
@@ -588,10 +540,9 @@ def generate_report_endpoint():
     except Exception as e:
         error_message = f"生成报告时出错: {e}"
         print(error_message)
-        # 检查是否为特定的RPC错误 - 仅在Windows上
-        if sys.platform == "win32" and 'pythoncom' in sys.modules:
-            if isinstance(e, pythoncom.com_error) and e.hresult == -2147023170:
-                error_message = "生成报告失败：无法与Word程序通信（远程过程调用失败）。请确保Word已正确安装且没有在后台挂起或出错的进程。"
+        # 检查是否为特定的RPC错误
+        if isinstance(e, pythoncom.com_error) and e.hresult == -2147023170:
+            error_message = "生成报告失败：无法与Word程序通信（远程过程调用失败）。请确保Word已正确安装且没有在后台挂起或出错的进程。"
         return jsonify({"error": error_message}), 500
 
 if __name__ == '__main__':
