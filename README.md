@@ -6,6 +6,8 @@ cd <YOUR_PROJECT_NAME>
 # 第 2 步：安装必要的依赖项。
 npm i
 npm run build
+# linux还需要
+sudo yum install libreoffice-headless
 
 # 第 3 步: 安装 Python 依赖项。
 pip install -r requirements.txt
