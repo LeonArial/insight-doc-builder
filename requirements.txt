@@ -1,5 +1,6 @@
 python-docx
 Flask
 Flask-Cors
-BeautifulSoup
-docx
+beautifulsoup4
+pywin32
+matplotlib

@@ -22,7 +22,7 @@ const ReportGenerator = () => {
   const [reportData, setReportData] = useState<ReportData>({
     systemName: '',
     reportDate: new Date().toISOString().split('T')[0],
-    sDate: new Date().toISOString().split('T')[0].replace(/-/g, ''),
+    sDate: new Date().toISOString().split('T')[0].replace('-', ''),
     ipOrDomain: '',
     testDateRange: '',
     contactName: '',

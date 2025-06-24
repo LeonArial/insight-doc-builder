@@ -6,13 +6,19 @@ import copy
 import base64
 import tempfile
 from bs4 import BeautifulSoup
-from docx.shared import Inches, Pt, RGBColor
-from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
-import datetime
+from docx.shared import Inches
 from docx import Document
 from docx.shared import Inches
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 import io
+import win32com.client
+import pythoncom
+import io
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+from matplotlib.patches import Patch
+from matplotlib.ticker import MaxNLocator
 
 app = Flask(__name__)
 CORS(app, expose_headers=['Content-Disposition'])  # 允许跨域请求，并暴露Content-Disposition头
@@ -363,12 +369,111 @@ def html_to_docx(html_content, cell):
 
 # --- API Endpoint ---
 
+def update_toc(doc_path):
+    """
+    使用 win32com 更新 Word 文档的目录。
+    这需要 Windows 环境和安装了 PyWin32 库。
+    """
+    pythoncom.CoInitializeEx(pythoncom.COINIT_APARTMENTTHREADED)
+    word = None
+    try:
+        word = win32com.client.DispatchEx("Word.Application")
+        word.Visible = False
+        doc = word.Documents.Open(doc_path)
+        
+        # 更新文档中的所有字段，包括目录
+        doc.Fields.Update()
+        
+        doc.Close(SaveChanges=True)
+    except Exception as e:
+        print(f"更新目录时出错: {e}")
+        raise  # 重新引发异常，以便端点可以捕获它
+    finally:
+        if word:
+            try:
+                word.Quit(SaveChanges=False)
+            except Exception:
+                # 关闭Word时出错是常见的，特别是如果进程已经自行终止。
+                # 由于文档已保存，此错误通常可以安全地忽略。
+                pass
+        pythoncom.CoUninitialize()
+
+def create_vulnerability_chart(gw, zw, dw):
+    """
+    根据高、中、低危漏洞数量生成柱状图，并返回包含图表的内存流。
+    """
+    # 解决matplotlib中文显示问题
+    plt.rcParams['font.sans-serif'] = ['SimHei']  # 指定默认字体
+    plt.rcParams['axes.unicode_minus'] = False  # 解决保存图像是负号'-'显示为方块的问题
+
+    labels = ['高危', '中危', '低危']
+    counts = [gw, zw, dw]
+    # 颜色匹配图片中的：红、黄、绿
+    colors = ['#FF0000', '#FFC000', '#92D050']
+
+    fig, ax = plt.subplots(figsize=(8, 4))
+    ax.bar(labels, counts, color=colors)
+
+    ax.set_title('漏洞数量', fontsize=16)
+    
+    max_count = max(counts) if counts else 0
+    ax.set_ylim(0, max_count + 1 if max_count > 0 else 2)
+    ax.yaxis.set_major_locator(MaxNLocator(integer=True))
+
+    ax.set_xticklabels([])
+    ax.tick_params(axis='x', length=0)
+
+    legend_elements = [
+        Patch(facecolor=colors[0], label='高危'),
+        Patch(facecolor=colors[1], label='中危'),
+        Patch(facecolor=colors[2], label='低危')
+    ]
+    ax.legend(handles=legend_elements, loc='lower center', ncol=3, frameon=False, bbox_to_anchor=(0.5, -0.15))
+
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+
+    img_buffer = io.BytesIO()
+    plt.savefig(img_buffer, format='png', bbox_inches='tight', pad_inches=0.1)
+    img_buffer.seek(0)
+    plt.close(fig)
+    
+    return img_buffer
+
+def replace_placeholder_with_chart(doc, placeholder, chart_buffer):
+    """
+    在文档中查找占位符（段落或表格内）并替换为图表。
+    """
+    for p in doc.paragraphs:
+        if placeholder in p.text:
+            p.clear()
+            run = p.add_run()
+            run.add_picture(chart_buffer, width=Inches(6.0))
+            return
+
+    for table in doc.tables:
+        for row in table.rows:
+            for cell in row.cells:
+                for p in cell.paragraphs:
+                    if placeholder in p.text:
+                        p.clear()
+                        run = p.add_run()
+                        run.add_picture(chart_buffer, width=Inches(5.5))
+                        return
+
 @app.route('/api/generate-report', methods=['POST'])
 def generate_report_endpoint():
     """接收前端数据并生成报告的API端点。"""
     try:
         data = request.json
         
+        vulnerabilities = data.get('vulnerabilities', [])
+
+        # 按风险等级统计漏洞数量
+        gw_num = sum(1 for v in vulnerabilities if v.get('risk') == '高危')
+        zw_num = sum(1 for v in vulnerabilities if v.get('risk') == '中危')
+        dw_num = sum(1 for v in vulnerabilities if v.get('risk') == '低危')
+
         replacements = {
             '#SYSTEM#': data.get('systemName', ''),
             '#DATE#': data.get('reportDate', ''),
@@ -379,9 +484,11 @@ def generate_report_endpoint():
             '#DJPHONE#': data.get('contactPhone', ''),
             '#CSNAME#': data.get('testerName', ''),
             '#CSPHONE#': data.get('testerPhone', ''),
-            '#CSACCOUNT#': data.get('testAccount', '')
+            '#CSACCOUNT#': data.get('testAccount', ''),
+            '#GWNUM#': str(gw_num),
+            '#ZWNUM#': str(zw_num),
+            '#DWNUM#': str(dw_num),
         }
-        vulnerabilities = data.get('vulnerabilities', [])
 
         template_path = CONFIG['TEMPLATE_PATH']
         if not os.path.exists(template_path):
@@ -389,12 +496,31 @@ def generate_report_endpoint():
 
         doc = Document(template_path)
 
+        # 生成并插入漏洞统计图表
+        chart_buffer = create_vulnerability_chart(gw_num, zw_num, dw_num)
+        replace_placeholder_with_chart(doc, '#TABLE#', chart_buffer)
+
         replace_general_placeholders(doc, replacements)
         populate_vulnerabilities(doc, vulnerabilities, replacements['#SYSTEM#'])
 
-        file_stream = io.BytesIO()
-        doc.save(file_stream)
-        file_stream.seek(0)
+        # 使用临时文件来保存文档，以便后续更新目录
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.docx') as temp_doc:
+            temp_path = temp_doc.name
+        
+        try:
+            doc.save(temp_path)
+
+            # 更新目录
+            update_toc(os.path.abspath(temp_path))
+
+            # 将更新后的文件读入内存流
+            file_stream = io.BytesIO()
+            with open(temp_path, 'rb') as f:
+                file_stream.write(f.read())
+            file_stream.seek(0)
+        finally:
+            # 确保临时文件被删除
+            os.remove(temp_path)
 
         systemName = data.get('systemName', '')
         reportDate = data.get('sDate', '')
@@ -408,8 +534,12 @@ def generate_report_endpoint():
         )
 
     except Exception as e:
-        print(f"生成报告时出错: {e}")
-        return jsonify({"error": str(e)}), 500
+        error_message = f"生成报告时出错: {e}"
+        print(error_message)
+        # 检查是否为特定的RPC错误
+        if isinstance(e, pythoncom.com_error) and e.hresult == -2147023170:
+            error_message = "生成报告失败：无法与Word程序通信（远程过程调用失败）。请确保Word已正确安装且没有在后台挂起或出错的进程。"
+        return jsonify({"error": error_message}), 500
 
 if __name__ == '__main__':
     # 端口5001以避免与Vite的默认端口冲突

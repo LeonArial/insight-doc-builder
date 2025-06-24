@@ -9,3 +9,5 @@ trigger: always_on
 - shadcn-ui
 - Tailwind CSS
 组件和样式的默认路径是/components/ui
+
+字段属性的路径是/components/report/types.ts
