@@ -420,13 +420,15 @@ def update_toc_linux(doc_path):
     
     try:
         print("正在尝试使用 'soffice' 更新目录...")
-        subprocess.run(command, check=True, capture_output=True, text=True, timeout=60)
+        # 兼容 Python 3.6，使用 stdout 和 stderr 代替 capture_output
+        subprocess.run(command, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=60)
         print("使用 'soffice' 更新目录成功。")
     except FileNotFoundError:
         command[0] = 'libreoffice'
         try:
             print("'soffice' 未找到，正在尝试使用 'libreoffice' 更新目录...")
-            subprocess.run(command, check=True, capture_output=True, text=True, timeout=60)
+            # 兼容 Python 3.6
+            subprocess.run(command, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=60)
             print("使用 'libreoffice' 更新目录成功。")
         except (FileNotFoundError, subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
             error_msg = f"错误：无法使用 LibreOffice 更新目录。请确保在 Linux 系统上已安装 LibreOffice 并且 'soffice' 或 'libreoffice' 在系统路径中。错误详情: {e}"
@@ -586,9 +588,10 @@ def generate_report_endpoint():
     except Exception as e:
         error_message = f"生成报告时出错: {e}"
         print(error_message)
-        # 检查是否为特定的RPC错误
-        if isinstance(e, pythoncom.com_error) and e.hresult == -2147023170:
-            error_message = "生成报告失败：无法与Word程序通信（远程过程调用失败）。请确保Word已正确安装且没有在后台挂起或出错的进程。"
+        # 检查是否为特定的RPC错误 - 仅在Windows上
+        if sys.platform == "win32" and 'pythoncom' in sys.modules:
+            if isinstance(e, pythoncom.com_error) and e.hresult == -2147023170:
+                error_message = "生成报告失败：无法与Word程序通信（远程过程调用失败）。请确保Word已正确安装且没有在后台挂起或出错的进程。"
         return jsonify({"error": error_message}), 500
 
 if __name__ == '__main__':
