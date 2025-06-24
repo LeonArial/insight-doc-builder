@@ -10,7 +10,10 @@ npm i
 pip install -r requirements.txt
 
 # 第 4 步：运行服务器启动脚本。
-node run.js
+pm2 start server.js
+pm2 start app.py -x --interpreter python
+pm2 startup
+pm2 save
 # 或者
 npm run dev
 python run.py
