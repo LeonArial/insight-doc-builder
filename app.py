@@ -1,7 +1,6 @@
 from flask import Flask, request, send_file, jsonify
 from flask_cors import CORS
 import os
-import re
 import copy
 import base64
 import tempfile
@@ -13,7 +12,7 @@ from docx.enum.text import WD_ALIGN_PARAGRAPH
 import io
 import win32com.client
 import pythoncom
-import io
+from PIL import Image
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -75,6 +74,28 @@ def clear_cell_content(cell):
     """清空一个单元格的所有内容。"""
     for p in cell.paragraphs:
         clear_paragraph(p)
+
+def insert_image_with_clarity(cell, image_path):
+    """使用Pillow获取图片原始尺寸和DPI，以最佳清晰度插入图片。"""
+    try:
+        with Image.open(image_path) as img:
+            width_px, height_px = img.size
+            dpi = img.info.get('dpi', (96, 96))[0]
+
+        width_in = width_px / dpi
+        height_in = height_px / dpi
+        max_width_in = 5.5
+
+        p_image = cell.add_paragraph()
+        p_image.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        run = p_image.add_run()
+
+        if width_in > max_width_in:
+            run.add_picture(image_path, width=Inches(max_width_in))
+        else:
+            run.add_picture(image_path, width=Inches(width_in), height=Inches(height_in))
+    except Exception as e:
+        cell.add_paragraph(f'\n[图片添加失败: {e}]')
 
 def populate_vulnerabilities(doc, vulnerabilities, system_name):
     """根据模板动态创建和填充漏洞条目。
@@ -197,13 +218,7 @@ def populate_vulnerabilities(doc, vulnerabilities, system_name):
 
         image_path = vuln.get('process', {}).get('image_path', '')
         if image_path and os.path.exists(image_path):
-            try:
-                p_image = cell.add_paragraph()
-                run = p_image.add_run()
-                run.add_picture(image_path, width=Inches(5.0))
-                p_image.alignment = WD_ALIGN_PARAGRAPH.CENTER
-            except Exception as e:
-                cell.add_paragraph(f'\n[图片添加失败: {e}]')
+            insert_image_with_clarity(cell, image_path)
 
 def html_to_docx(html_content, cell):
     """
@@ -312,37 +327,26 @@ def html_to_docx(html_content, cell):
                 else:
                     if str(child).strip():
                         run = paragraph.add_run(str(child).strip() + ' ')
-            
-            # 添加新段落用于下一个列表项或内容
-            current_paragraph = cell.add_paragraph()
-        
+
         elif element.name == 'img':
-            # 处理base64编码的图片
-            src = element.get('src', '')
-            if src.startswith('data:image'):
+            img_src = element.get('src', '')
+            if img_src.startswith('data:image'):
                 try:
-                    # 提取base64数据
-                    img_data = src.split('base64,')[1]
-                    img_binary = base64.b64decode(img_data)
+                    header, encoded = img_src.split(',', 1)
+                    img_data = base64.b64decode(encoded)
                     
-                    # 创建临时文件
-                    with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as temp_file:
-                        temp_file.write(img_binary)
-                        temp_path = temp_file.name
+                    with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as temp_img:
+                        temp_img.write(img_data)
+                        image_path = temp_img.name
                     
-                    # 添加图片到文档
-                    run = paragraph.add_run()
-                    run.add_picture(temp_path, width=Inches(4))  # 设置图片宽度为4英寸
-                    
-                    # 删除临时文件
-                    os.unlink(temp_path)
-                    
-                    # 添加新段落用于后续内容
-                    current_paragraph = cell.add_paragraph()
-                    
+                    # 使用新的高清函数插入图片
+                    insert_image_with_clarity(cell, image_path)
+                    os.remove(image_path)
+
+                    current_paragraph = cell.add_paragraph() # 为图片后的内容创建新段落
+
                 except Exception as e:
-                    print(f"Error processing image: {e}")
-                    paragraph.add_run("[图片加载失败]")
+                    cell.add_paragraph(f'\n[图片添加失败: {e}]')
         
         elif element.name == 'br':
             # 添加换行
