@@ -65,7 +65,7 @@ const BasicInfoForm: React.FC<BasicInfoFormProps> = ({ reportData, setReportData
               id="systemName"
               value={reportData.systemName}
               onChange={handleChange}
-              placeholder="输入系统名称"
+              placeholder="例如：XX系统"
               className="bg-slate-700 border-slate-600 text-white"
             />
           </div>
@@ -95,12 +95,12 @@ const BasicInfoForm: React.FC<BasicInfoFormProps> = ({ reportData, setReportData
             </Popover>
           </div>
           <div>
-            <Label htmlFor="ipOrDomain" className="text-white">域名或IP地址</Label>
+            <Label htmlFor="ipOrDomain" className="text-white">IP/域名</Label>
             <Input
               id="ipOrDomain"
               value={reportData.ipOrDomain}
               onChange={handleChange}
-              placeholder="输入域名或IP地址"
+              placeholder="例如：127.0.0.1"
               className="bg-slate-700 border-slate-600 text-white"
             />
           </div>
@@ -138,12 +138,12 @@ const BasicInfoForm: React.FC<BasicInfoFormProps> = ({ reportData, setReportData
             </Popover>
           </div>
           <div className="md:col-span-2">
-            <Label htmlFor="testAccount" className="text-white">测试账号或认证设施</Label>
+            <Label htmlFor="testAccount" className="text-white">测试账号/认证设施</Label>
             <Input
               id="testAccount"
               value={reportData.testAccount}
               onChange={handleChange}
-              placeholder="输入测试账号或使用的认证设施"
+              placeholder="例如：admin/123456"
               className="bg-slate-700 border-slate-600 text-white"
             />
           </div>

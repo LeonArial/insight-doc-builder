@@ -28,7 +28,7 @@ const ContactInfoForm: React.FC<ContactInfoFormProps> = ({ reportData, setReport
                 id="contactName"
                 value={reportData.contactName}
                 onChange={handleChange}
-                placeholder="输入对接人员姓名"
+                placeholder="例如：张三"
                 className="bg-slate-700 border-slate-600 text-white"
               />
             </div>
@@ -38,7 +38,7 @@ const ContactInfoForm: React.FC<ContactInfoFormProps> = ({ reportData, setReport
                 id="contactPhone"
                 value={reportData.contactPhone}
                 onChange={handleChange}
-                placeholder="输入对接人员联系电话"
+                placeholder="例如：1234567890"
                 className="bg-slate-700 border-slate-600 text-white"
               />
             </div>
@@ -54,7 +54,7 @@ const ContactInfoForm: React.FC<ContactInfoFormProps> = ({ reportData, setReport
                 id="testerName"
                 value={reportData.testerName}
                 onChange={handleChange}
-                placeholder="输入测试人员姓名"
+                placeholder="例如：李四"
                 className="bg-slate-700 border-slate-600 text-white"
               />
             </div>
@@ -64,7 +64,7 @@ const ContactInfoForm: React.FC<ContactInfoFormProps> = ({ reportData, setReport
                 id="testerPhone"
                 value={reportData.testerPhone}
                 onChange={handleChange}
-                placeholder="输入测试人员联系电话"
+                placeholder="例如：1234567890"
                 className="bg-slate-700 border-slate-600 text-white"
               />
             </div>
