@@ -12,6 +12,7 @@ from docx.enum.text import WD_ALIGN_PARAGRAPH
 import io
 import win32com.client
 import pythoncom
+import requests
 from PIL import Image
 import matplotlib
 matplotlib.use('Agg')
@@ -28,7 +29,10 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 TEMPLATE_PATH = os.path.join(BASE_DIR, '渗透报告模板.docx')
 
 CONFIG = {
-    'TEMPLATE_PATH': TEMPLATE_PATH
+    'TEMPLATE_PATH': TEMPLATE_PATH,
+    'AI_API_URL': 'https://api.siliconflow.cn/v1/chat/completions',
+    # IMPORTANT: Move this key to an environment variable in a production environment!
+    'AI_API_KEY': 'Bearer sk-dmowsenrtifmlnpmlhaatxgkxnhbmusjfzgnofvlhtblslwa'
 }
 
 # --- 从 doc_generator.py 迁移过来的核心函数 ---
@@ -544,6 +548,54 @@ def generate_report_endpoint():
         if isinstance(e, pythoncom.com_error) and e.hresult == -2147023170:
             error_message = "生成报告失败：无法与Word程序通信（远程过程调用失败）。请确保Word已正确安装且没有在后台挂起或出错的进程。"
         return jsonify({"error": error_message}), 500
+
+@app.route('/api/ai-generate', methods=['POST'])
+def ai_generate_text():
+    try:
+        data = request.json
+        vuln_name = data.get('vuln_name')
+        prompt_type = data.get('prompt_type') # 'description' or 'advice'
+
+        if not vuln_name:
+            return jsonify({"error": "需要填写漏洞名称"}), 400
+
+        if prompt_type == 'description':
+            prompt_content = f"你现在要写一份渗透测试报告,根据我输入的漏洞名称,写出漏洞的风险描述,字数在100字左右:{vuln_name}"
+        elif prompt_type == 'advice':
+            prompt_content = f"你现在要写一份渗透测试报告,根据我输入的漏洞名称,写出该漏洞的整改建议,字数在100字左右:{vuln_name}"
+        else:
+            return jsonify({"error": "需要选择生成类型"}), 400
+
+        payload = {
+            "model": "Qwen/Qwen3-8B",
+            "stream": False,
+            "max_tokens": 512,
+            "messages": [
+                {
+                    "role": "user",
+                    "content": prompt_content
+                }
+            ]
+        }
+        headers = {
+            "Authorization": CONFIG['AI_API_KEY'],
+            "Content-Type": "application/json"
+        }
+
+        response = requests.post(CONFIG['AI_API_URL'], json=payload, headers=headers)
+        response.raise_for_status()
+
+        ai_response = response.json()
+        content = ai_response['choices'][0]['message']['content'].strip()
+        return jsonify({"content": content})
+
+    except requests.exceptions.RequestException as e:
+        return jsonify({"error": f"AI API request failed: {e}"}), 500
+    except (KeyError, IndexError) as e:
+        print(f"AI Response Error: {response.text}")
+        return jsonify({"error": f"Failed to parse AI response: {e}"}), 500
+    except Exception as e:
+        return jsonify({"error": f"An unexpected error occurred: {e}"}), 500
 
 if __name__ == '__main__':
     # 端口5001以避免与Vite的默认端口冲突
