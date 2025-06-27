@@ -9,7 +9,7 @@ import requests
 import sys
 
 # sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), 'src/components/api')))
-sys.path.append('src/components/api')
+sys.path.append('src/api')
 from def_unit import *
 from ai_request import *
 
