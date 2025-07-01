@@ -88,7 +88,7 @@ const Converter = () => {
   };
 
   return (
-    <div className="container mx-auto p-4 md:p-8 flex items-center justify-center min-h-[calc(100vh-4rem)]">
+    <div className="container mx-auto p-4 md:p-8 flex flex-col items-center justify-center min-h-[calc(100vh-4rem)]">
       <div className="max-w-2xl w-full">
         <Card
           className={cn('transition-all', isDragging && 'border-primary border-2 border-dashed bg-muted/50')}
@@ -146,6 +146,20 @@ const Converter = () => {
                 )}
               </Button>
             </div>
+          </CardContent>
+        </Card>
+
+        <Card className="mt-8 w-full">
+          <CardHeader>
+            <CardTitle className="text-xl">如何将HTML另存为PDF？</CardTitle>
+            <CardDescription>
+              下载HTML文件后，在浏览器中打开它，然后按下 Ctrl+P (或 Cmd+P) 选择“另存为PDF”。
+              <br />
+              根据图示中红框部分进行设置，可以让样式保持与html统一。
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <img src="/tips.png" className="rounded-lg border w-full" />
           </CardContent>
         </Card>
       </div>
