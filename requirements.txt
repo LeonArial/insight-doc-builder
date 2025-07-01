@@ -5,3 +5,7 @@ beautifulsoup4
 pywin32
 matplotlib
 Pillow
+pandas
+openpyxl
+Jinja2
+Werkzeug
