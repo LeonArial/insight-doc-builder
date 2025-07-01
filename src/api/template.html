@@ -158,6 +158,7 @@
         <h1>运维中心日报 {{ report_date }}</h1>
         {% for sheet in sheets %}
             {% if sheet.name == '运维中心日常计划 - 进行中任务' %}
+            <h2>运维中心日报</h2>
             <div class="stats-container">
                 <div class="stat-card">
                     <div class="title">进行中任务</div>
@@ -174,6 +175,7 @@
             </div>
             {% endif %}
             {% if sheet.name == '星御专项计划 - 进行中任务' %}
+            <h2>星御专项日报</h2>
             <div class="stats-container">
                 <div class="stat-card">
                     <div class="title">进行中任务</div>
