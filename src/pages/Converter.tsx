@@ -9,17 +9,15 @@ import { cn } from '@/lib/utils';
 const Converter = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isConverting, setIsConverting] = useState(false);
-  const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
 
   const processFile = (file: File | null) => {
     if (file) {
-      if (file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' || file.name.endsWith('.xlsx')) {
+      if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
         setSelectedFile(file);
-        setDownloadUrl(null);
         toast.success(`已选择文件: ${file.name}`);
       } else {
-        toast.error('请上传有效的 .xlsx 文件。');
+        toast.error('请上传有效的 .xls 或 .xlsx 文件。');
         setSelectedFile(null);
       }
     }
@@ -36,27 +34,26 @@ const Converter = () => {
     }
 
     setIsConverting(true);
-    setDownloadUrl(null);
     toast.info('开始转换，请稍候...');
 
     const formData = new FormData();
     formData.append('file', selectedFile);
 
     try {
-      // TODO: 替换为真实的后端 API 地址
-      const response = await fetch('/api/excel-to-html', {
+      const response = await fetch('http://127.0.0.1:8081/upload', {
         method: 'POST',
         body: formData,
       });
 
-      if (!response.ok) {
+      if (response.ok && response.url.includes('/generated/')) {
+        toast.success('转换成功！文件将自动下载。');
+        // 通过导航到响应URL来触发下载
+        window.location.href = response.url;
+        // 转换成功后清空已选文件
+        setSelectedFile(null);
+      } else {
         throw new Error('转换失败，请检查文件或联系管理员。');
       }
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      setDownloadUrl(url);
-      toast.success('转换成功！文件已可供下载。');
 
     } catch (err: any) {
       toast.error(err.message || '发生未知错误。');
@@ -119,12 +116,12 @@ const Converter = () => {
                 <p className="mb-2 text-sm text-muted-foreground">
                   <span className="font-semibold">点击上传</span> 或拖放文件
                 </p>
-                <p className="text-xs text-muted-foreground">仅支持 .xlsx 格式</p>
+                <p className="text-xs text-muted-foreground">支持 .xlsx 和 .xls 格式</p>
               </div>
               <Input
                 id="file-upload"
                 type="file"
-                accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
                 onChange={handleFileChange}
                 className="hidden"
               />
@@ -148,14 +145,6 @@ const Converter = () => {
                   '开始转换'
                 )}
               </Button>
-              {downloadUrl && (
-                <Button asChild>
-                  <a href={downloadUrl} download={`${selectedFile?.name.replace(/\.xlsx$/, '') || 'document'}.html`}>
-                    <Download className="mr-2 h-4 w-4" />
-                    下载 HTML
-                  </a>
-                </Button>
-              )}
             </div>
           </CardContent>
         </Card>
