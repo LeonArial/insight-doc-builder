@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Upload, File, Download, Loader2, UploadCloud } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import API_CONFIG from '@/config';
 
 const Converter = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -40,7 +41,7 @@ const Converter = () => {
     formData.append('file', selectedFile);
 
     try {
-      const response = await fetch('http://127.0.0.1:8081/upload', {
+      const response = await fetch(`${API_CONFIG.dailyURL}/upload`, {
         method: 'POST',
         body: formData,
       });
