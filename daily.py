@@ -143,4 +143,4 @@ if __name__ == '__main__':
     cleanup_thread = threading.Thread(target=cleanup_worker, daemon=True)
     cleanup_thread.start()
 
-    app.run(host='0.0.0.0', port=8081, debug=True)
+    app.run(host='0.0.0.0', port=5002, debug=True)

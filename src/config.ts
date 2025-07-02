@@ -2,7 +2,7 @@
 // 这使得局域网内的任何设备都能连接到后端，即使主机的IP地址是动态变化的。
 const API_CONFIG = {
   baseURL: `http://${window.location.hostname}:5001`,
-  dailyURL: `http://${window.location.hostname}:8081`,
+  dailyURL: `http://${window.location.hostname}:5002`,
 };
 
 export default API_CONFIG;

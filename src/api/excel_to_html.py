@@ -91,9 +91,9 @@ def excel_to_html(excel_path, template_path, output_path, report_date_str):
             df['completion_date'] = pd.to_datetime(df['实际完成时间'], errors='coerce').dt.date
             df['start_date'] = pd.to_datetime(df['计划开始时间'], errors='coerce').dt.date
 
-            in_progress_df = df[(df['当前进度'] != 1.0) & (pd.isna(df['completion_date']))].copy()
-            completed_today_df = df[df['completion_date'] == today].copy()
             tomorrow = today + timedelta(days=1)
+            in_progress_df = df[(df['当前进度'] != 1.0) & (pd.isna(df['completion_date'])) & (df['start_date'] != tomorrow)].copy()
+            completed_today_df = df[df['completion_date'] == today].copy()
             new_tasks_df = df[df['start_date'] == tomorrow].copy()
 
             if sheet_name == '运维中心日常计划':
