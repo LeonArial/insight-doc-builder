@@ -29,10 +29,18 @@ def clean_data(df_to_clean):
 def sort_by_group(df_to_sort):
     """
     如果存在“负责小组”列，则按其进行自定义排序（“架构组”优先）。
+    在小组内部，如果存在“当前进度”列，则按进度升序排序。
     """
     if '负责小组' in df_to_sort.columns:
         df_to_sort['sort_key'] = df_to_sort['负责小组'].apply(lambda x: 0 if '架构' in str(x) else 1)
-        df_to_sort.sort_values(by=['sort_key', '负责小组'], inplace=True)
+        
+        sort_criteria = ['sort_key', '负责小组']
+        if '当前进度' in df_to_sort.columns:
+            # 确保进度列是数值类型以便正确排序
+            df_to_sort['当前进度'] = pd.to_numeric(df_to_sort['当前进度'], errors='coerce')
+            sort_criteria.append('当前进度')
+        
+        df_to_sort.sort_values(by=sort_criteria, inplace=True)
         df_to_sort.drop(columns='sort_key', inplace=True)
     return df_to_sort
 
@@ -114,10 +122,31 @@ def excel_to_html(excel_path, template_path, output_path, report_date_str):
             new_tasks_df.drop(columns=['completion_date', 'start_date'], inplace=True, errors='ignore')
 
             if not in_progress_df.empty:
-                cols_to_keep_inprogress = ['任务名称', '负责小组', '当前进度', '计划完成时间（原）', '计划完成时间（新）', '计划延期天数', '风险提示']
+                cols_to_keep_inprogress = ['任务名称', '负责小组', '计划完成时间（新）', '计划延期天数', '当前进度', '风险提示']
                 existing_cols = [col for col in cols_to_keep_inprogress if col in in_progress_df.columns]
                 in_progress_df = in_progress_df[existing_cols]
                 in_progress_df = clean_data(in_progress_df)
+                
+                # 如果存在“计划延期天数”和“计划完成时间（新）”，则格式化延期显示
+                if '计划延期天数' in in_progress_df.columns and '计划完成时间（新）' in in_progress_df.columns:
+                    def format_completion_date_with_delay(row):
+                        completion_date = row['计划完成时间（新）']
+                        delay_days_str = str(row['计划延期天数'])
+
+                        if pd.notna(delay_days_str) and delay_days_str not in ['0', 'nan', 'None', '']:
+                            try:
+                                delay_days_val = float(delay_days_str)
+                                if delay_days_val > 0:
+                                    delay_days_int = int(delay_days_val)
+                                    return f"{completion_date} <span style='color:red;'>(+{delay_days_int}天)</span>"
+                            except (ValueError, TypeError):
+                                pass
+                        return completion_date
+                    
+                    in_progress_df['计划完成时间（新）'] = in_progress_df.apply(format_completion_date_with_delay, axis=1)
+                    # 隐藏已合并的“计划延期天数”列
+                    in_progress_df.drop(columns=['计划延期天数'], inplace=True)
+                    
                 in_progress_df = sort_by_group(in_progress_df)
                 in_progress_df = add_sequence_number(in_progress_df)
                 df_processed = in_progress_df.astype(object).fillna('')
@@ -128,7 +157,7 @@ def excel_to_html(excel_path, template_path, output_path, report_date_str):
                 })
 
             if not completed_today_df.empty:
-                cols_to_keep_completed = ['任务名称', '负责小组', '实际完成时间（新）', '实际完成时间', '耗时（天）', '是否按期完成']
+                cols_to_keep_completed = ['任务名称', '负责小组', '实际完成时间', '耗时（天）', '是否按期完成']
                 existing_cols = [col for col in cols_to_keep_completed if col in completed_today_df.columns]
                 completed_today_df = completed_today_df[existing_cols]
                 completed_today_df = clean_data(completed_today_df)
@@ -239,7 +268,7 @@ def main():
         print(f"错误: 模板文件不存在 {template_path}")
         sys.exit(1)
 
-    report_date_str = (datetime.now() + timedelta(days=1)).strftime('%Y-%m-%d')
+    report_date_str = (datetime.now()).strftime('%Y-%m-%d')
 
     try:
         excel_to_html(args.input, template_path, args.output, report_date_str)

@@ -95,7 +95,7 @@ def upload_file():
 @app.route('/generated/<filename>')
 def download_file(filename):
     """提供已生成报告的下载，并设置用户友好的文件名。"""
-    report_date_str = (datetime.now() + timedelta(days=1)).strftime('%Y-%m-%d')
+    report_date_str = (datetime.now()).strftime('%Y-%m-%d')
     download_name = f'运维中心日报-{report_date_str}.html'
 
     return send_from_directory(
