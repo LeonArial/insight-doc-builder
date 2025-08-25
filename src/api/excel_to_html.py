@@ -3,7 +3,7 @@ import pandas as pd
 from jinja2 import Environment, FileSystemLoader
 from datetime import datetime, timedelta
 import os
-import win32com.client as win32
+# import win32com.client as win32
 import argparse
 
 # 启用 pandas 的未来行为以消除警告
@@ -56,7 +56,7 @@ def excel_to_html(excel_path, template_path, output_path, report_date_str):
     """
     读取 Excel 文件中的所有工作表，并使用 Jinja2 模板生成 HTML 报告。
     """
-    try:
+    """ try:
         # 使用 win32com 强制 Excel 打开并重新保存文件，以修复深层文件损坏问题。
         # 这模拟了手动打开和保存文件的过程，可以解决 openpyxl 无法处理的错误。
         # 注意：此方法需要 Windows 系统并安装了 Excel。
@@ -73,7 +73,7 @@ def excel_to_html(excel_path, template_path, output_path, report_date_str):
         # 确保即使出错也尝试关闭 Excel 进程
         if 'excel_app' in locals() and excel_app:
             excel_app.Quit()
-        raise
+        raise """
 
     # 使用 openpyxl 读取预处理后的文件
     try:
