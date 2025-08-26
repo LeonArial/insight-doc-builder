@@ -98,6 +98,9 @@ def excel_to_html(excel_path, template_path, output_path, report_date_str):
 
         sheets_to_split = ['运维中心日常计划', '星御专项计划']
         if sheet_name in sheets_to_split and '当前进度' in df.columns and '实际完成时间' in df.columns and '计划开始时间' in df.columns:
+            # 排除"计划开始时间"列为空的数据
+            df = df.dropna(subset=['计划开始时间'])
+            
             df['当前进度'] = pd.to_numeric(df['当前进度'], errors='coerce')
             df['completion_date'] = pd.to_datetime(df['实际完成时间'], errors='coerce').dt.date
             df['start_date'] = pd.to_datetime(df['计划开始时间'], errors='coerce').dt.date
@@ -223,7 +226,7 @@ def excel_to_html(excel_path, template_path, output_path, report_date_str):
                 # 先筛选出"处理状态"为"进行中"的数据
                 df = df[df['处理状态'] == '进行中']
                 # 然后隐藏"处理状态"列
-                df = df.drop(columns=['处理状态'])
+                # df = df.drop(columns=['处理状态'])
             
             # 在"监控告警"和"资源视图"工作表中隐藏"父记录"相关列
             if sheet_name in ['监控告警', '资源视图']:
