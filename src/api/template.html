@@ -311,6 +311,7 @@
                                 {% if '小组' in header %}class="group-width"{% endif %}
                                 {% if '时间' in header %}class="time-width"{% endif %}
                                 {% if '进度' in header %}class="progress-width"{% endif %}
+                                {% if '状态' in header %}class="group-width"{% endif %}
                                 >
                                 {{ header }}
                                 </th>
@@ -344,7 +345,7 @@
                                     {% set cell_str = cell | string | lower %}
                                     {% if '按时完成' in cell_str %}
                                         <span class="status completed">{{ cell }}</span>
-                                    {% elif '未按时完成' in cell_str %}
+                                    {% elif '延期完成' in cell_str %}
                                         <span class="status delayed">{{ cell }}</span>
                                     {% elif '进行中' in cell_str %}
                                         <span class="status completed">{{ cell }}</span>

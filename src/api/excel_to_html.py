@@ -91,7 +91,7 @@ def excel_to_html(excel_path, template_path, output_path, report_date_str):
     # 遍历每个工作表
     for sheet_name in xls.sheet_names:
         # 只处理指定的工作表
-        if sheet_name not in ['资源视图', '监控告警', '故障及事件处理', '运维中心日常计划', '星御专项计划']:
+        if sheet_name not in ['资源视图', '监控告警', '故障及事件处理', '运维中心日常计划', '星御专项计划','应用系统告警台账']:
             continue
 
         df = pd.read_excel(xls, sheet_name=sheet_name)
